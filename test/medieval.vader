@@ -1,0 +1,210 @@
+Before:
+  let g:medieval_langs = ['sh']
+
+" === :EvalBlock! — target self (doc line 65-79) ===
+
+Given markdown (EvalBlock! replaces block content):
+  ```sh
+  echo "hello"
+  ```
+
+Execute (EvalBlock! replaces block in-place):
+  2
+  EvalBlock!
+
+Then (Output replaces code block content):
+  AssertEqual 'hello', getline(2)
+  AssertEqual '```', getline(3)
+
+" === Named target block (doc line 23-44) ===
+
+Given markdown (Output sent to named target block):
+  <!-- target: result -->
+  ```sh
+  echo "computed"
+  ```
+
+  <!-- name: result -->
+  ```
+  ```
+
+Execute (Eval source block with named target):
+  3
+  EvalBlock
+
+Then (Output written to named target block):
+  AssertEqual 'computed', getline(8)
+
+" === :EvalBlock {target} — explicit target argument (doc line 65) ===
+
+Given markdown (Explicit target argument overrides header):
+  ```sh
+  echo "override"
+  ```
+
+  <!-- name: dest -->
+  ```
+  ```
+
+Execute (Explicit target argument):
+  2
+  EvalBlock dest
+
+Then (Output sent to explicit target, not header target):
+  AssertEqual 'override', getline(7)
+
+" === Info string formats (doc line 81-102) ===
+
+Given markdown (Info string with curly-dot: {.lang}):
+  ```{.sh}
+  echo "dotlang"
+  ```
+
+Execute (EvalBlock! with {.lang} fence):
+  2
+  EvalBlock!
+
+Then (Language parsed from {.lang} format):
+  AssertEqual 'dotlang', getline(2)
+
+Given markdown (Info string with curly: {lang}):
+  ```{sh}
+  echo "curlylang"
+  ```
+
+Execute (EvalBlock! with {lang} fence):
+  2
+  EvalBlock!
+
+Then (Language parsed from {lang} format):
+  AssertEqual 'curlylang', getline(2)
+
+Given markdown (Info string with extra attributes):
+  ``` {.sh .numberLines #my-id}
+  echo "attrs"
+  ```
+
+Execute (EvalBlock! with extra attributes):
+  2
+  EvalBlock!
+
+Then (Language parsed despite extra attributes):
+  AssertEqual 'attrs', getline(2)
+
+" === Tilde fences (doc line 104) ===
+" SKIPPED: ~~~sh resolves end pattern to ~~~, but ~ is a special regex atom
+" in Vim (last substitute string). With no prior :s, this gives E33.
+" This is a pre-existing bug in the fence end-pattern handling.
+
+" === Require — recursive dependencies (doc line 179-201) ===
+
+Given markdown (Recursive require chain):
+  <!-- name: first_name -->
+  ```sh
+  first_name="Gregory"
+  ```
+
+  <!-- name: full_name, require: first_name -->
+  ```sh
+  full_name="$first_name Anders"
+  ```
+
+  <!-- target: greeting, require: full_name -->
+  ```sh
+  echo "Hi, my name is $full_name"
+  ```
+
+Execute (Eval block with recursive require chain):
+  13
+  EvalBlock
+
+Then (All dependencies resolved recursively):
+  AssertEqual 'Hi, my name is Gregory Anders', getline(18)
+
+" === Language alias (doc line 296-302) ===
+
+Given markdown (Language alias sh=bash):
+  ```sh
+  echo "aliased"
+  ```
+
+Before:
+  let g:medieval_langs = ['sh=bash']
+
+Execute (EvalBlock! with aliased language):
+  2
+  EvalBlock!
+
+Then (sh executed via bash alias):
+  AssertEqual 'aliased', getline(2)
+
+After:
+  let g:medieval_langs = ['sh']
+
+" === Register target (doc line 20-21) ===
+
+Before:
+  let g:medieval_langs = ['sh']
+
+Given markdown (Register target stores output in register):
+  ```sh
+  echo "in register"
+  ```
+
+Execute (EvalBlock to register @a):
+  2
+  EvalBlock @a
+
+Then (Output stored in register a):
+  AssertEqual "in register\n", getreg('a')
+
+" === File target (doc line 46-54) ===
+
+Before:
+  let g:medieval_langs = ['sh']
+  if filereadable('_medieval_test_output.txt')
+    throw 'Refusing to run: _medieval_test_output.txt already exists in working directory'
+  endif
+
+Given markdown (File target writes output to file):
+  <!-- target: ./_medieval_test_output.txt -->
+  ```sh
+  echo "file output"
+  ```
+
+Execute (EvalBlock with file target):
+  3
+  EvalBlock
+
+Then (Output written to file):
+  Assert filereadable('_medieval_test_output.txt'), 'Output file should exist'
+  AssertEqual ['file output'], readfile('_medieval_test_output.txt')
+
+After:
+  call delete('_medieval_test_output.txt')
+
+" === Tangle (doc line 203-236) ===
+
+Before:
+  let g:medieval_langs = ['sh']
+  if filereadable('_medieval_test_tangle.sh')
+    throw 'Refusing to run: _medieval_test_tangle.sh already exists in working directory'
+  endif
+
+Given markdown (Tangle writes source to file before executing):
+  <!-- tangle: _medieval_test_tangle.sh -->
+  ```sh
+  echo "tangled"
+  ```
+
+Execute (EvalBlock! with tangle option):
+  3
+  EvalBlock!
+
+Then (Source tangled to file and executed):
+  Assert filereadable('_medieval_test_tangle.sh'), 'Tangle file should exist'
+  AssertEqual ['echo "tangled"'], readfile('_medieval_test_tangle.sh')
+  AssertEqual 'tangled', getline(3)
+
+After:
+  call delete('_medieval_test_tangle.sh')

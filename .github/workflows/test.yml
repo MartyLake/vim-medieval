@@ -1,0 +1,14 @@
+name: Test
+on:
+  push:
+    branches: [master]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Vim
+        run: which vim && vim --version | head -1
+      - name: Run tests
+        run: ./run-test.sh
