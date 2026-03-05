@@ -244,7 +244,12 @@ function! medieval#evalrange(line1, line2, target) abort
         for fence in fences
             let matches = matchlist(line, fence.start)
             if !empty(matches) && matches[fence.lang] !=# ''
-                call add(blocks, lnum)
+                " Skip named blocks without a target — these are output
+                " destinations or dependency blocks, not source blocks
+                let opts = s:parseopts(&filetype, lnum - 1)
+                if !has_key(opts, 'name') || has_key(opts, 'target')
+                    call add(blocks, lnum)
+                endif
                 break
             endif
         endfor

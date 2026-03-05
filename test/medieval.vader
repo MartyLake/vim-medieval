@@ -310,3 +310,22 @@ Then (Both blocks evaluated correctly):
   AssertEqual '```', getline(3)
   AssertEqual 'two', getline(6)
   AssertEqual '```', getline(7)
+
+" === Range skips named output blocks ===
+
+Given markdown (Range skips named blocks that are output destinations):
+  <!-- target: out -->
+  ```sh
+  echo "source"
+  ```
+
+  <!-- name: out -->
+  ```sh
+  old output
+  ```
+
+Execute (Range eval should only run the source block):
+  %EvalBlock
+
+Then (Source block output written to named block, named block not executed):
+  AssertEqual 'source', getline(8)
