@@ -1,0 +1,7 @@
+set nocompatible
+filetype off
+set runtimepath+=test/vader.vim
+set runtimepath+=.
+filetype plugin indent on
+let g:medieval_langs = ['sh']
+let g:medieval_sync = 1

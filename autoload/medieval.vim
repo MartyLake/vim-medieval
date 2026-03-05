@@ -108,7 +108,7 @@ endfunction
 " Wrapper around job start functions for both neovim and vim
 function! s:jobstart(cmd, cb) abort
     let output = []
-    if exists('*jobstart')
+    if !get(g:, 'medieval_sync') && exists('*jobstart')
         call jobstart(a:cmd, {
                     \ 'on_stdout': {_, data, ... -> s:extend(output, data)},
                     \ 'on_stderr': {_, data, ... -> s:extend(output, data)},
@@ -116,7 +116,7 @@ function! s:jobstart(cmd, cb) abort
                     \ 'stdout_buffered': 1,
                     \ 'stderr_buffered': 1,
                     \ })
-    elseif exists('*job_start')
+    elseif !get(g:, 'medieval_sync') && exists('*job_start')
         call job_start(a:cmd, {
                     \ 'callback': {_, data -> add(output, data)},
                     \ 'exit_cb': {... -> a:cb(output)},
