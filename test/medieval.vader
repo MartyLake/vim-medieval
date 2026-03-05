@@ -208,3 +208,105 @@ Then (Source tangled to file and executed):
 
 After:
   call delete('_medieval_test_tangle.sh')
+
+" === Range support ===
+
+Before:
+  let g:medieval_langs = ['sh']
+
+Given markdown (Two blocks both targeting self):
+  <!-- target: self -->
+  ```sh
+  echo "first"
+  ```
+
+  <!-- target: self -->
+  ```sh
+  echo "second"
+  ```
+
+Execute (Range eval replaces all blocks):
+  %EvalBlock!
+
+
+Then (Both blocks replaced):
+  AssertEqual 'first', getline(3)
+  AssertEqual 'second', getline(8)
+
+Given markdown (Partial range evaluates only covered blocks):
+  <!-- target: self -->
+  ```sh
+  echo "in range"
+  ```
+
+  <!-- target: self -->
+  ```sh
+  echo "also in range"
+  ```
+
+  <!-- target: self -->
+  ```sh
+  echo "out of range"
+  ```
+
+Execute (Range covers only first two blocks):
+  1,10EvalBlock!
+
+
+Then (First two blocks evaluated, third unchanged):
+  AssertEqual 'in range', getline(3)
+  AssertEqual 'also in range', getline(8)
+  AssertEqual 'echo "out of range"', getline(13)
+
+Given markdown (No blocks in range):
+  This is just text.
+  No code blocks here.
+
+  ```sh
+  echo "hello"
+  ```
+
+Execute (Range covers only text lines):
+  1,2EvalBlock
+
+
+Then (Buffer is unchanged):
+  AssertEqual 'This is just text.', getline(1)
+  AssertEqual 'No code blocks here.', getline(2)
+  AssertEqual 'echo "hello"', getline(5)
+
+Given markdown (Named target block):
+  <!-- target: output -->
+  ```sh
+  echo "result"
+  ```
+
+  <!-- name: output -->
+  ```
+  ```
+
+Execute (Range eval with named target):
+  %EvalBlock
+
+
+Then (Named target block populated with output):
+  AssertEqual 'result', getline(8)
+
+Given markdown (Closing fences not treated as blocks):
+  ```sh
+  echo "one"
+  ```
+
+  ```sh
+  echo "two"
+  ```
+
+Execute (Range eval only evaluates opening fences):
+  %EvalBlock!
+
+
+Then (Both blocks evaluated correctly):
+  AssertEqual 'one', getline(2)
+  AssertEqual '```', getline(3)
+  AssertEqual 'two', getline(6)
+  AssertEqual '```', getline(7)

@@ -20,6 +20,18 @@ By placing your cursor anywhere in the code block above and running
 You can also redirect the output of the evaluation into a register using
 |:EvalBlock| @{0-9a-z".=*+}.
 
+You can also use a range to evaluate multiple blocks at once. For example: >
+
+	:%EvalBlock
+<
+evaluates all code blocks in the entire buffer. Similarly: >
+
+	:10,50EvalBlock
+<
+evaluates all code blocks between lines 10 and 50. A visual selection also
+works: select lines, then run |:EvalBlock|. Each block uses its own options
+(target, require, etc.).
+
 							*medieval-target*
 You can also send the output of evaluation into another code block, allowing
 you to do a primitive style of literate programming. You can accomplish this
@@ -289,7 +301,14 @@ medieval#eval({target}[, {opts})
 				\   complete: function('s:complete'),
 				\   after: function('s:after')})
 <
-							*g:medieval_langs*
+							*medieval#evalrange()*
+medieval#evalrange({line1}, {line2}, {target})
+		Evaluate all code blocks between {line1} and {line2}.
+		{target} is passed to |medieval#eval()| for each block. Use
+		an empty string to let each block use its own target. Use
+		"self" to replace each block's contents with its output.
+
+						*g:medieval_langs*
 Medieval will only attempt to execute code blocks in languages explicitly
 listed in the variable |g:medieval_langs|. The structure of this variable is a
 list of strings corresponding to whitelisted languages that can be

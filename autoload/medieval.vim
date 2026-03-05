@@ -227,6 +227,39 @@ function! s:callback(context, output) abort
     endif
 endfunction
 
+function! medieval#evalrange(line1, line2, target) abort
+    if !exists('g:medieval_langs')
+        call s:error('g:medieval_langs is unset')
+        return
+    endif
+
+    let fences = filter((s:fences + get(g:, 'medieval_fences', [])), 'has_key(v:val, "lang")')
+    let view = winsaveview()
+
+    " Collect opening fence lines with a language within the range
+    let blocks = []
+    let lnum = a:line1
+    while lnum <= a:line2
+        let line = getline(lnum)
+        for fence in fences
+            let matches = matchlist(line, fence.start)
+            if !empty(matches) && matches[fence.lang] !=# ''
+                call add(blocks, lnum)
+                break
+            endif
+        endfor
+        let lnum += 1
+    endwhile
+
+    " Evaluate each block
+    for blnum in blocks
+        call cursor(blnum, 1)
+        call medieval#eval(a:target)
+    endfor
+
+    call winrestview(view)
+endfunction
+
 function! medieval#eval(...) abort
     if !exists('g:medieval_langs')
         call s:error('g:medieval_langs is unset')
