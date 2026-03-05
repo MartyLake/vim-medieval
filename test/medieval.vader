@@ -35,6 +35,26 @@ Execute (Eval source block with named target):
 Then (Output written to named target block):
   AssertEqual 'computed', getline(8)
 
+" === EvalBlock from destination block redirects to source ===
+
+Given markdown (EvalBlock in destination block evaluates its source):
+  <!-- target: dest -->
+  ```sh
+  echo "from source"
+  ```
+
+  <!-- name: dest -->
+  ```
+  old output
+  ```
+
+Execute (Cursor in destination block):
+  8
+  EvalBlock
+
+Then (Source block was evaluated, output written to destination):
+  AssertEqual 'from source', getline(8)
+
 " === :EvalBlock {target} — explicit target argument (doc line 65) ===
 
 Given markdown (Explicit target argument overrides header):

@@ -280,6 +280,27 @@ function! medieval#eval(...) abort
         return
     endif
 
+    " If cursor is in a named destination block, find and evaluate its source
+    let opts = s:parseopts(&filetype, start - 1)
+    if has_key(opts, 'name') && !has_key(opts, 'target')
+        call cursor(1, 1)
+        let pat = get(get(g:, 'medieval_option_pat', {}), &filetype, s:optionpat)
+        while 1
+            let srcline = search(pat . s:optspat, 'cW')
+            if !srcline
+                call winrestview(view)
+                return s:error('No source block targeting "' . opts.name . '"')
+            endif
+            call cursor(srcline + 1, 1)
+            if getline(srcline) =~# '\<target:\s*' . opts.name
+                break
+            endif
+        endwhile
+        call call('medieval#eval', a:000)
+        call winrestview(view)
+        return
+    endif
+
     call cursor(start, 1)
 
     let lang = ''
